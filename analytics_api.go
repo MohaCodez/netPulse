@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/amit/netpulse/internal/storage"
@@ -171,4 +172,79 @@ func (a *App) SetAlertRules(rules AlertRules) {
 	a.diagEngine.SetThresholds(t)
 
 	a.cfg.NotificationsEnabled = rules.NotificationsEnabled
+}
+
+// AskAI sends a question to the local Ollama instance with network context.
+func (a *App) AskAI(question string) (string, error) {
+	// Gather current context for the AI
+	context := a.buildAIContext()
+
+	systemPrompt := `You are a network engineering assistant embedded in NetPulse, a network health monitoring app. 
+You have access to real-time network metrics from the user's machine. 
+Explain network concepts clearly for an ECE student. 
+Use the provided metrics to give specific, actionable answers.
+Keep responses concise but technically accurate.
+Use bullet points for clarity when appropriate.`
+
+	userMessage := context + "\n\nUser question: " + question
+
+	return queryOllama(systemPrompt, userMessage)
+}
+
+func (a *App) buildAIContext() string {
+	ctx := "Current Network State:\n"
+
+	// Current status
+	v := a.diagMonitor.LastVerdict()
+	if v != nil {
+		ctx += fmt.Sprintf("- Diagnosis: %s (%s) — %s\n", v.Title, v.Category, v.Severity)
+	}
+
+	// Wi-Fi
+	if wSnap, err := a.db.GetLatestWifiSnapshot(); err == nil && wSnap != nil {
+		band := "2.4 GHz"
+		if wSnap.FrequencyMHz >= 5000 {
+			band = "5 GHz"
+		}
+		ctx += fmt.Sprintf("- Wi-Fi: %s, %s Ch%d, Signal %d dBm, Link %0.f Mbps\n",
+			wSnap.SSID, band, wSnap.Channel, wSnap.SignalDBm, wSnap.LinkSpeedMbps)
+	}
+
+	// Recent latency
+	since := time.Now().Add(-1 * time.Minute)
+	if results, err := a.db.GetProbeResultsSince(since); err == nil && len(results) > 0 {
+		var gatewayLat, extLat float64
+		var gCount, eCount int
+		for _, r := range results {
+			if r.Success {
+				if r.ProbeType == "gateway" {
+					gatewayLat += r.LatencyMs
+					gCount++
+				} else if r.ProbeType == "ping" {
+					extLat += r.LatencyMs
+					eCount++
+				}
+			}
+		}
+		if gCount > 0 {
+			ctx += fmt.Sprintf("- Gateway latency (last 1min): %.0fms avg\n", gatewayLat/float64(gCount))
+		}
+		if eCount > 0 {
+			ctx += fmt.Sprintf("- External latency (last 1min): %.0fms avg\n", extLat/float64(eCount))
+		}
+	}
+
+	// Speed test
+	if tests, err := a.db.GetRecentSpeedTests(1); err == nil && len(tests) > 0 {
+		ctx += fmt.Sprintf("- Last speed test: ↓%.1f Mbps ↑%.1f Mbps\n", tests[0].DownloadMbps, tests[0].UploadMbps)
+	}
+
+	// Network events
+	evSince := time.Now().Add(-1 * time.Hour)
+	if events, err := a.db.GetNetworkEvents(evSince); err == nil && len(events) > 0 {
+		ctx += fmt.Sprintf("- Network changes in last hour: %d\n", len(events))
+		ctx += fmt.Sprintf("  Last change: %s → %s (%s)\n", events[0].PrevSSID, events[0].CurrSSID, events[0].Reason)
+	}
+
+	return ctx
 }

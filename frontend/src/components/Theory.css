@@ -1,0 +1,95 @@
+.theory-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.theory-page h2 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+
+.theory-intro {
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  font-size: 0.9rem;
+}
+
+.theory-section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.theory-section h3 {
+  margin: 0 0 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.theory-content p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.theory-content strong {
+  color: var(--text-primary);
+}
+
+.theory-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+}
+
+.theory-table th {
+  text-align: left;
+  padding: 8px 12px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+
+.theory-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.theory-table tr:last-child td {
+  border-bottom: none;
+}
+
+.theory-key-points {
+  background: var(--bg-subtle);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.theory-key-points h4 {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.theory-key-points ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.theory-key-points li {
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.theory-key-points li strong {
+  color: var(--text-primary);
+}

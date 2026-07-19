@@ -17,6 +17,9 @@ import { DiagnosisTimelineChart } from './components/DiagnosisTimelineChart';
 import { SpeedHistoryChart } from './components/SpeedHistoryChart';
 import { CorrelationChart } from './components/CorrelationChart';
 import { AlertConfig } from './components/AlertConfig';
+import { Theory } from './components/Theory';
+import './components/Theory.css';
+import { AIChat } from './components/AIChat';
 import {
   useNetworkStatus,
   useProbeResults,
@@ -36,7 +39,7 @@ import {
 } from './hooks/useAnalytics';
 import './App.css';
 
-type Tab = 'overview' | 'analytics' | 'settings';
+type Tab = 'overview' | 'analytics' | 'theory' | 'ai' | 'settings';
 
 function App() {
   const [tab, setTab] = useState<Tab>('overview');
@@ -70,6 +73,12 @@ function App() {
             </button>
             <button className={`tab-btn ${tab === 'analytics' ? 'active' : ''}`} onClick={() => setTab('analytics')}>
               Analytics
+            </button>
+            <button className={`tab-btn ${tab === 'theory' ? 'active' : ''}`} onClick={() => setTab('theory')}>
+              Theory
+            </button>
+            <button className={`tab-btn ${tab === 'ai' ? 'active' : ''}`} onClick={() => setTab('ai')}>
+              AI
             </button>
             <button className={`tab-btn ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}>
               Settings
@@ -130,6 +139,14 @@ function App() {
               <AlertConfig />
               <ExportButton />
             </div>
+          </div>
+        )}
+
+        {tab === 'theory' && <Theory />}
+
+        {tab === 'ai' && (
+          <div className="ai-page">
+            <AIChat />
           </div>
         )}
       </main>

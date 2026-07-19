@@ -186,3 +186,9 @@ body {
   flex-direction: column;
   gap: 24px;
 }
+
+.ai-page {
+  max-width: 800px;
+  margin: 0 auto;
+  height: calc(100vh - 120px);
+}
