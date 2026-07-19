@@ -178,13 +178,15 @@ body {
 }
 
 .settings-page {
-  max-width: 700px;
-}
-
-.settings-grid {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.settings-page::before {
+  content: '';
+  display: block;
 }
 
 .ai-page {

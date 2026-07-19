@@ -135,20 +135,17 @@ function App() {
 
         {tab === 'settings' && (
           <div className="settings-page">
-            <div className="settings-grid">
-              <AlertConfig />
-              <ExportButton />
-            </div>
+            <AlertConfig />
+            <ExportButton />
           </div>
         )}
 
         {tab === 'theory' && <Theory />}
 
-        {tab === 'ai' && (
-          <div className="ai-page">
-            <AIChat />
-          </div>
-        )}
+        {/* AI chat is always mounted but hidden when not active — preserves conversation */}
+        <div className="ai-page" style={{ display: tab === 'ai' ? 'block' : 'none' }}>
+          <AIChat />
+        </div>
       </main>
     </div>
   );

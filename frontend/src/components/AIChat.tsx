@@ -11,13 +11,32 @@ export function AIChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Hi! I\'m your network assistant powered by Qwen (running locally via Ollama). Ask me anything about your network, the charts, or networking concepts. I have access to your real-time metrics.',
+      content: 'Hi! I\'m your network assistant powered by a local LLM via Ollama. Ask me anything about your network, the charts, or networking concepts. I have access to your real-time metrics.',
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [models, setModels] = useState<string[]>([]);
+  const [currentModel, setCurrentModel] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Load available models
+    if (window.go?.main?.App?.GetAvailableModels) {
+      window.go.main.App.GetAvailableModels().then((m: string[]) => setModels(m || []));
+    }
+    if (window.go?.main?.App?.GetCurrentModel) {
+      window.go.main.App.GetCurrentModel().then((m: string) => setCurrentModel(m));
+    }
+  }, []);
+
+  const handleModelChange = async (model: string) => {
+    if (window.go?.main?.App?.SetModel) {
+      await window.go.main.App.SetModel(model);
+      setCurrentModel(model);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,7 +84,17 @@ export function AIChat() {
     <div className="ai-chat">
       <div className="chat-header">
         <h3>🤖 AI Network Assistant</h3>
-        <span className="chat-model">qwen2.5-coder:3b (local)</span>
+        <div className="model-selector">
+          <select
+            value={currentModel}
+            onChange={(e) => handleModelChange(e.target.value)}
+            disabled={loading}
+          >
+            {models.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="chat-messages">

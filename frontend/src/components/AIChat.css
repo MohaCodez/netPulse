@@ -23,12 +23,19 @@
   font-weight: 600;
 }
 
-.chat-model {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  padding: 2px 8px;
+.model-selector select {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   background: var(--bg-subtle);
-  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.model-selector select:focus {
+  border-color: var(--accent);
 }
 
 .chat-messages {

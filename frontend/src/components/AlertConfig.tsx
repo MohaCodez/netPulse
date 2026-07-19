@@ -30,7 +30,6 @@ export function AlertConfig() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    // Load current rules from backend
     if (window.go?.main?.App?.GetAlertRules) {
       window.go.main.App.GetAlertRules().then((r: AlertRules | null) => {
         if (r) setRules(r);
@@ -66,91 +65,93 @@ export function AlertConfig() {
         </div>
       </div>
 
-      <div className="rule-group">
-        <h4>Latency Thresholds</h4>
-        <div className="rule-row">
-          <label>Warning above</label>
-          <div className="rule-input">
-            <input type="number" value={rules.latency_warning_ms}
-              onChange={(e) => updateRule('latency_warning_ms', Number(e.target.value))} />
-            <span>ms</span>
+      <div className="rule-groups">
+        <div className="rule-group">
+          <h4>Latency</h4>
+          <div className="rule-row">
+            <label>Warning</label>
+            <div className="rule-input">
+              <input type="number" value={rules.latency_warning_ms}
+                onChange={(e) => updateRule('latency_warning_ms', Number(e.target.value))} />
+              <span>ms</span>
+            </div>
+          </div>
+          <div className="rule-row">
+            <label>Critical</label>
+            <div className="rule-input">
+              <input type="number" value={rules.latency_critical_ms}
+                onChange={(e) => updateRule('latency_critical_ms', Number(e.target.value))} />
+              <span>ms</span>
+            </div>
           </div>
         </div>
-        <div className="rule-row">
-          <label>Critical above</label>
-          <div className="rule-input">
-            <input type="number" value={rules.latency_critical_ms}
-              onChange={(e) => updateRule('latency_critical_ms', Number(e.target.value))} />
-            <span>ms</span>
-          </div>
-        </div>
-      </div>
 
-      <div className="rule-group">
-        <h4>Packet Loss</h4>
-        <div className="rule-row">
-          <label>Warning above</label>
-          <div className="rule-input">
-            <input type="number" value={rules.loss_warning_pct}
-              onChange={(e) => updateRule('loss_warning_pct', Number(e.target.value))} />
-            <span>%</span>
+        <div className="rule-group">
+          <h4>Packet Loss</h4>
+          <div className="rule-row">
+            <label>Warning</label>
+            <div className="rule-input">
+              <input type="number" value={rules.loss_warning_pct}
+                onChange={(e) => updateRule('loss_warning_pct', Number(e.target.value))} />
+              <span>%</span>
+            </div>
+          </div>
+          <div className="rule-row">
+            <label>Critical</label>
+            <div className="rule-input">
+              <input type="number" value={rules.loss_critical_pct}
+                onChange={(e) => updateRule('loss_critical_pct', Number(e.target.value))} />
+              <span>%</span>
+            </div>
           </div>
         </div>
-        <div className="rule-row">
-          <label>Critical above</label>
-          <div className="rule-input">
-            <input type="number" value={rules.loss_critical_pct}
-              onChange={(e) => updateRule('loss_critical_pct', Number(e.target.value))} />
-            <span>%</span>
-          </div>
-        </div>
-      </div>
 
-      <div className="rule-group">
-        <h4>Jitter</h4>
-        <div className="rule-row">
-          <label>Warning above</label>
-          <div className="rule-input">
-            <input type="number" value={rules.jitter_warning_ms}
-              onChange={(e) => updateRule('jitter_warning_ms', Number(e.target.value))} />
-            <span>ms</span>
+        <div className="rule-group">
+          <h4>Jitter</h4>
+          <div className="rule-row">
+            <label>Warning</label>
+            <div className="rule-input">
+              <input type="number" value={rules.jitter_warning_ms}
+                onChange={(e) => updateRule('jitter_warning_ms', Number(e.target.value))} />
+              <span>ms</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="rule-group">
-        <h4>Wi-Fi Signal</h4>
-        <div className="rule-row">
-          <label>Warning below</label>
-          <div className="rule-input">
-            <input type="number" value={rules.wifi_signal_warning}
-              onChange={(e) => updateRule('wifi_signal_warning', Number(e.target.value))} />
-            <span>dBm</span>
+        <div className="rule-group">
+          <h4>Wi-Fi Signal</h4>
+          <div className="rule-row">
+            <label>Warning</label>
+            <div className="rule-input">
+              <input type="number" value={rules.wifi_signal_warning}
+                onChange={(e) => updateRule('wifi_signal_warning', Number(e.target.value))} />
+              <span>dBm</span>
+            </div>
+          </div>
+          <div className="rule-row">
+            <label>Critical</label>
+            <div className="rule-input">
+              <input type="number" value={rules.wifi_signal_critical}
+                onChange={(e) => updateRule('wifi_signal_critical', Number(e.target.value))} />
+              <span>dBm</span>
+            </div>
           </div>
         </div>
-        <div className="rule-row">
-          <label>Critical below</label>
-          <div className="rule-input">
-            <input type="number" value={rules.wifi_signal_critical}
-              onChange={(e) => updateRule('wifi_signal_critical', Number(e.target.value))} />
-            <span>dBm</span>
-          </div>
-        </div>
-      </div>
 
-      <div className="rule-group">
-        <h4>Notifications</h4>
-        <div className="rule-row">
-          <label>Enabled</label>
-          <input type="checkbox" checked={rules.notifications_enabled}
-            onChange={(e) => updateRule('notifications_enabled', e.target.checked)} />
-        </div>
-        <div className="rule-row">
-          <label>Cooldown</label>
-          <div className="rule-input">
-            <input type="number" value={rules.notification_cooldown_sec}
-              onChange={(e) => updateRule('notification_cooldown_sec', Number(e.target.value))} />
-            <span>sec</span>
+        <div className="rule-group">
+          <h4>Notifications</h4>
+          <div className="rule-row">
+            <label>Enabled</label>
+            <input type="checkbox" checked={rules.notifications_enabled}
+              onChange={(e) => updateRule('notifications_enabled', e.target.checked)} />
+          </div>
+          <div className="rule-row">
+            <label>Cooldown</label>
+            <div className="rule-input">
+              <input type="number" value={rules.notification_cooldown_sec}
+                onChange={(e) => updateRule('notification_cooldown_sec', Number(e.target.value))} />
+              <span>sec</span>
+            </div>
           </div>
         </div>
       </div>
