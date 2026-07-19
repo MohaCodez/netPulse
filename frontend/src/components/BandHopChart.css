@@ -1,0 +1,92 @@
+.band-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.band-badge {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.band-24 { background: #fef3c7; color: #92400e; }
+.band-5 { background: #dbeafe; color: #1e40af; }
+.band-6 { background: #ede9fe; color: #5b21b6; }
+
+.hop-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.hop-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.hop-event {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  background: var(--bg-subtle);
+  border-radius: 6px;
+}
+
+.hop-time {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 0.7rem;
+  min-width: 70px;
+}
+
+.hop-from { color: var(--text-secondary); }
+.hop-arrow { color: var(--text-muted); }
+.hop-to { color: var(--text-primary); font-weight: 600; }
+
+.band-strip {
+  display: flex;
+  gap: 1px;
+  height: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.band-block {
+  flex: 1;
+  min-width: 2px;
+}
+
+.band-block.band-24 { background: #f59e0b; }
+.band-block.band-5 { background: #3b82f6; }
+.band-block.band-6 { background: #8b5cf6; }
+
+.band-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legend-dot.band-24 { background: #f59e0b; }
+.legend-dot.band-5 { background: #3b82f6; }

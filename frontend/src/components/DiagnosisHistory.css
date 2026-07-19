@@ -1,0 +1,116 @@
+.diagnosis-container {
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.diagnosis-container h3 {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.diagnosis-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 20px;
+}
+
+.diagnosis-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.diagnosis-item {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  border-left: 4px solid;
+}
+
+.diagnosis-item.severity-critical { border-left-color: #ef4444; }
+.diagnosis-item.severity-warning { border-left-color: #f59e0b; }
+.diagnosis-item.severity-info { border-left-color: #3b82f6; }
+
+.diagnosis-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.severity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.severity-dot.severity-critical { background: #ef4444; }
+.severity-dot.severity-warning { background: #f59e0b; }
+.severity-dot.severity-info { background: #3b82f6; }
+
+.diagnosis-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.diagnosis-category {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--border);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.diagnosis-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.diagnosis-desc {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.diagnosis-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.evidence-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.evidence-row span {
+  color: var(--text-muted);
+}
+
+.evidence-row code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.diagnosis-resolved {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: #22c55e;
+}

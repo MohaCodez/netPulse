@@ -1,0 +1,14 @@
+:root {
+  --bg: #0f1117;
+  --card-bg: #1a1d27;
+  --bg-subtle: #242833;
+  --border: #2e3340;
+  --text-primary: #f0f2f5;
+  --text-secondary: #a0a8b8;
+  --text-muted: #6b7280;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
