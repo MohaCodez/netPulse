@@ -11,6 +11,7 @@ import (
 	"github.com/amit/netpulse/internal/diagnosis"
 	"github.com/amit/netpulse/internal/notifier"
 	"github.com/amit/netpulse/internal/probe"
+	"github.com/amit/netpulse/internal/scanner"
 	"github.com/amit/netpulse/internal/speedtest"
 	"github.com/amit/netpulse/internal/storage"
 	"github.com/amit/netpulse/internal/wifi"
@@ -77,6 +78,7 @@ type App struct {
 	speedRunner    *speedtest.Runner
 	notify         *notifier.Notifier
 	networkWatcher *probe.NetworkWatcher
+	netScanner     *scanner.Scanner
 }
 
 // NewApp creates a new App instance.
@@ -128,6 +130,9 @@ func (a *App) startup(ctx context.Context) {
 	// Set up network change watcher
 	a.networkWatcher = probe.NewNetworkWatcher(3*time.Second, a.handleNetworkChange)
 	a.networkWatcher.Start()
+
+	// Set up network scanner
+	a.netScanner = scanner.NewScanner()
 
 	// Set up periodic maintenance (purge old data, recompute baselines)
 	maintenance := storage.NewMaintenance(a.db, 1*time.Hour)

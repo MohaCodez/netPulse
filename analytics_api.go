@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/amit/netpulse/internal/scanner"
 	"github.com/amit/netpulse/internal/storage"
 )
 
@@ -337,4 +339,28 @@ func (a *App) buildAIContext() string {
 	}
 
 	return ctx
+}
+
+// ScanNetwork performs a LAN scan and returns discovered devices.
+func (a *App) ScanNetwork() []*scanner.Device {
+	if a.netScanner == nil {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	devices, err := a.netScanner.Scan(ctx)
+	if err != nil {
+		return nil
+	}
+	return devices
+}
+
+// GetNetworkDevices returns previously discovered devices without rescanning.
+func (a *App) GetNetworkDevices() []*scanner.Device {
+	if a.netScanner == nil {
+		return nil
+	}
+	return a.netScanner.GetDevices()
 }

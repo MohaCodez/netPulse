@@ -22,6 +22,8 @@ import './components/Theory.css';
 import { AIChat } from './components/AIChat';
 import { ProjectReport } from './components/ProjectReport';
 import './components/ProjectReport.css';
+import { NetworkDevices } from './components/NetworkDevices';
+import './components/NetworkDevices.css';
 import {
   useNetworkStatus,
   useProbeResults,
@@ -110,6 +112,7 @@ function App() {
               <div className="app-grid-main">
                 <LatencyChart probes={probes} />
                 <GatewayVsExternalChart data={gatewayVsExt} />
+                <NetworkDevices />
                 <DiagnosisHistory diagnoses={diagnoses} />
               </div>
               <div className="app-grid-side">
