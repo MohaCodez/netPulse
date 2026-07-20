@@ -226,7 +226,9 @@ func (a *App) GetProjectReport() *ProjectReportData {
 	a.db.QueryRow("SELECT COALESCE(AVG(download_mbps),0), COALESCE(AVG(upload_mbps),0) FROM speed_tests").Scan(&r.AvgDownload, &r.AvgUpload)
 
 	// Wi-Fi signal
-	a.db.QueryRow("SELECT COALESCE(AVG(signal_dbm),0) FROM wifi_snapshots WHERE signal_dbm != 0").Scan(&r.AvgSignal)
+	var avgSignalFloat float64
+	a.db.QueryRow("SELECT COALESCE(AVG(signal_dbm),0) FROM wifi_snapshots WHERE signal_dbm != 0").Scan(&avgSignalFloat)
+	r.AvgSignal = int(avgSignalFloat)
 
 	// Band hops (count channel changes in wifi_snapshots)
 	a.db.QueryRow(`
