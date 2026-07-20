@@ -25,8 +25,5 @@ Thumbs.db
 # Database (local data)
 *.db
 
-# Wails generated
-frontend/wailsjs/go/main/App.js
-frontend/wailsjs/go/main/App.d.ts
-frontend/wailsjs/go/models.ts
+# Wails generated (runtime only — bindings are committed)
 frontend/wailsjs/runtime/package.json
