@@ -78,7 +78,7 @@ export function CorrelationChart({ wifiData, latencyData }: Props) {
             contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 8 }}
             labelFormatter={(val) => new Date(val as number).toLocaleTimeString()}
             formatter={(val: any, name: any) => [
-              name === 'signal' ? `${val} dBm` : `${Number(val).toFixed(1)} ms`
+              name === 'Wi-Fi Signal (dBm)' ? `${val} dBm` : `${Number(val).toFixed(1)} ms`
             ]}
           />
           <Legend />
