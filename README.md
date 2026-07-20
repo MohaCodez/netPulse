@@ -7,6 +7,7 @@ NetPulse continuously monitors your internet/Wi-Fi health, runs a layered diagno
 ![Overview](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go) ![React](https://img.shields.io/badge/React-18+-61DAFB?logo=react) ![Wails](https://img.shields.io/badge/Wails-2.13-red)
 
 ---
+<img width="1378" height="1001" alt="image" src="https://github.com/user-attachments/assets/a362a5c9-6e56-4204-b5ef-dace5dd1ba14" />
 
 ## Features
 
