@@ -26,7 +26,7 @@ type Result struct {
 // TestConfig configures a speed test run.
 type TestConfig struct {
 	DownloadURLs []string
-	UploadURL    string
+	UploadURLs   []string // multiple fallbacks
 	Duration     time.Duration
 	Connections  int
 }
@@ -38,7 +38,10 @@ func DefaultConfig() *TestConfig {
 			"https://releases.ubuntu.com/22.04.5/ubuntu-22.04.5-desktop-amd64.iso",
 			"https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.tar.xz",
 		},
-		UploadURL:   "https://speed.cloudflare.com/__up",
+		UploadURLs: []string{
+			"https://speed.cloudflare.com/__up",
+			"https://httpbin.org/post",
+		},
 		Duration:    10 * time.Second,
 		Connections: 6,
 	}
@@ -169,7 +172,7 @@ func (r *Runner) runTest(ctx context.Context) (*Result, error) {
 	}
 	result.DownloadMbps = downloadMbps
 
-	// Upload test
+	// Upload test (shorter duration to stay within total time budget)
 	uploadMbps, err := r.measureUpload(ctx)
 	if err != nil {
 		log.Printf("[speedtest] upload failed (non-fatal): %v", err)
@@ -298,15 +301,26 @@ func (r *Runner) measureDownload(ctx context.Context) (float64, error) {
 }
 
 func (r *Runner) measureUpload(ctx context.Context) (float64, error) {
-	if r.config.UploadURL == "" {
+	if len(r.config.UploadURLs) == 0 {
 		return 0, fmt.Errorf("no upload URL configured")
 	}
 
+	// Try each upload URL until one works
+	for _, uploadURL := range r.config.UploadURLs {
+		mbps, err := r.doUpload(ctx, uploadURL)
+		if err == nil && mbps > 0 {
+			return mbps, nil
+		}
+	}
+	return 0, fmt.Errorf("all upload endpoints failed")
+}
+
+func (r *Runner) doUpload(ctx context.Context, uploadURL string) (float64, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.config.Duration+5*time.Second)
 	defer cancel()
 
-	// Generate random payload
-	dataSize := 2 * 1024 * 1024 // 2MB chunks
+	// Use smaller chunks to avoid rate limiting (100KB each)
+	dataSize := 100 * 1024
 	data := make([]byte, dataSize)
 	rand.Read(data)
 
@@ -317,15 +331,21 @@ func (r *Runner) measureUpload(ctx context.Context) (float64, error) {
 	start := time.Now()
 	deadline := start.Add(r.config.Duration)
 
-	for i := 0; i < r.config.Connections; i++ {
+	// Use fewer connections for upload (servers are more restrictive)
+	uploadConns := 3
+	if r.config.Connections < uploadConns {
+		uploadConns = r.config.Connections
+	}
+
+	for i := 0; i < uploadConns; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			client := &http.Client{}
+			client := &http.Client{Timeout: r.config.Duration + 5*time.Second}
 
 			for time.Now().Before(deadline) {
 				reader := bytes.NewReader(data)
-				req, err := http.NewRequestWithContext(ctx, "POST", r.config.UploadURL, reader)
+				req, err := http.NewRequestWithContext(ctx, "POST", uploadURL, reader)
 				if err != nil {
 					return
 				}
@@ -338,9 +358,14 @@ func (r *Runner) measureUpload(ctx context.Context) (float64, error) {
 				io.Copy(io.Discard, resp.Body)
 				resp.Body.Close()
 
-				mu.Lock()
-				totalBytes += int64(dataSize)
-				mu.Unlock()
+				if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
+					mu.Lock()
+					totalBytes += int64(dataSize)
+					mu.Unlock()
+				} else {
+					// Server rejected — stop trying
+					return
+				}
 			}
 		}()
 	}
@@ -349,7 +374,7 @@ func (r *Runner) measureUpload(ctx context.Context) (float64, error) {
 	elapsed := time.Since(start)
 
 	if totalBytes == 0 {
-		return 0, fmt.Errorf("no data uploaded")
+		return 0, fmt.Errorf("upload rejected by server")
 	}
 
 	bytesPerSec := float64(totalBytes) / elapsed.Seconds()

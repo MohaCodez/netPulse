@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-export function useNetworkStatus(pollInterval = 3000) {
+export function useNetworkStatus(pollInterval = 5000) {
   const [status, setStatus] = useState<main.StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +27,20 @@ export function useNetworkStatus(pollInterval = 3000) {
   useEffect(() => {
     refresh();
     const interval = setInterval(refresh, pollInterval);
-    return () => clearInterval(interval);
+
+    // Also listen for push events from Wails
+    const runtime = (window as any).runtime;
+    let cancel: (() => void) | undefined;
+    if (runtime?.EventsOn) {
+      cancel = runtime.EventsOn('diagnosis:update', () => {
+        refresh(); // Refresh immediately when diagnosis changes
+      });
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (cancel) cancel();
+    };
   }, [refresh, pollInterval]);
 
   return { status, loading, refresh };

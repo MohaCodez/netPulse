@@ -17,6 +17,7 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed all:frontend/dist
@@ -66,11 +67,12 @@ func main() {
 
 // App is the main application struct bound to the frontend.
 type App struct {
-	ctx          context.Context
-	cfg          *config.Config
-	db           *storage.DB
-	runner       *probe.Runner
-	diagMonitor  *diagnosis.Monitor
+	ctx            context.Context
+	cfg            *config.Config
+	db             *storage.DB
+	writer         *storage.Writer
+	runner         *probe.Runner
+	diagMonitor    *diagnosis.Monitor
 	diagEngine     *diagnosis.Engine
 	speedRunner    *speedtest.Runner
 	notify         *notifier.Notifier
@@ -88,6 +90,9 @@ func NewApp(cfg *config.Config, db *storage.DB) *App {
 // startup is called when the app starts.
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	// Set up batched writer
+	a.writer = storage.NewWriter(a.db, 256)
 
 	// Set up notifications
 	a.notify = notifier.NewNotifier(a.cfg.NotificationsEnabled, 60*time.Second)
@@ -146,6 +151,9 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.speedRunner != nil {
 		a.speedRunner.Stop()
 	}
+	if a.writer != nil {
+		a.writer.Stop()
+	}
 	if a.db != nil {
 		a.db.Close()
 	}
@@ -172,9 +180,22 @@ func (a *App) handleProbeResult(r probe.Result) {
 		NetworkID:  networkID,
 		Extra:      r.Extra,
 	}
-	if err := a.db.InsertProbeResult(pr); err != nil {
-		log.Printf("[store] error saving probe result: %v", err)
-	}
+	a.writer.Enqueue(func() {
+		if err := a.db.InsertProbeResult(pr); err != nil {
+			log.Printf("[store] error saving probe result: %v", err)
+		}
+	})
+
+	// Push to frontend via Wails events
+	wailsRuntime.EventsEmit(a.ctx, "probe:result", map[string]interface{}{
+		"probe_type": r.Type,
+		"target":     r.Target,
+		"success":    r.Success,
+		"latency_ms": r.LatencyMs,
+		"jitter_ms":  r.JitterMs,
+		"packet_loss": r.PacketLoss,
+		"timestamp":  r.Timestamp.Format(time.RFC3339),
+	})
 
 	// Store Wi-Fi snapshots
 	if r.Type == "wifi" && r.Success && r.Extra != nil {
@@ -209,6 +230,15 @@ func (a *App) handleDiagnosis(v *diagnosis.Verdict) {
 	if v.Category != diagnosis.CategoryHealthy {
 		a.notify.SendDiagnosis(string(v.Severity), v.Title, v.Description)
 	}
+	// Push diagnosis to frontend
+	wailsRuntime.EventsEmit(a.ctx, "diagnosis:update", map[string]interface{}{
+		"status":      string(v.Severity),
+		"category":    string(v.Category),
+		"title":       v.Title,
+		"description": v.Description,
+		"confidence":  v.Confidence,
+		"timestamp":   v.Timestamp.Format(time.RFC3339),
+	})
 }
 
 func (a *App) handleSpeedTest(result *speedtest.Result) {

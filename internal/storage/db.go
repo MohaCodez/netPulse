@@ -99,6 +99,9 @@ func Open(dbPath string) (*DB, error) {
 		return nil, fmt.Errorf("apply schema: %w", err)
 	}
 
+	// Migrate: add network_id column if missing
+	conn.Exec(`ALTER TABLE probe_results ADD COLUMN network_id TEXT DEFAULT ''`)
+
 	// Integrity check
 	var integrity string
 	if err := conn.QueryRow("PRAGMA integrity_check").Scan(&integrity); err == nil && integrity != "ok" {
@@ -132,9 +135,9 @@ func (db *DB) InsertProbeResult(r *ProbeResult) error {
 	}
 
 	_, err := db.conn.Exec(`
-		INSERT INTO probe_results (timestamp, probe_type, target, success, latency_ms, jitter_ms, packet_loss, extra_json)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		r.Timestamp, r.ProbeType, r.Target, success, r.LatencyMs, r.JitterMs, r.PacketLoss, extraJSON,
+		INSERT INTO probe_results (timestamp, probe_type, target, success, latency_ms, jitter_ms, packet_loss, network_id, extra_json)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		r.Timestamp, r.ProbeType, r.Target, success, r.LatencyMs, r.JitterMs, r.PacketLoss, r.NetworkID, extraJSON,
 	)
 	return err
 }

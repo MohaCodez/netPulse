@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS probe_results (
     latency_ms REAL,                  -- round-trip time in milliseconds
     jitter_ms REAL,                   -- jitter if available
     packet_loss REAL,                 -- 0.0 to 1.0
+    network_id TEXT DEFAULT '',       -- SSID or connection name
     extra_json TEXT,                  -- additional probe-specific data (JSON)
     created_at DATETIME NOT NULL DEFAULT (datetime('now'))
 );
