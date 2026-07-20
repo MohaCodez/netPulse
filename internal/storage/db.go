@@ -84,7 +84,7 @@ type WifiSnapshot struct {
 // Open opens (or creates) the SQLite database at the given path.
 func Open(dbPath string) (*DB, error) {
 	dir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		return nil, fmt.Errorf("create db directory: %w", err)
 	}
 
@@ -108,6 +108,9 @@ func Open(dbPath string) (*DB, error) {
 		conn.Close()
 		return nil, fmt.Errorf("database integrity check failed: %s", integrity)
 	}
+
+	// Secure file permissions (owner read/write only)
+	os.Chmod(dbPath, 0600)
 
 	return &DB{conn: conn}, nil
 }

@@ -300,11 +300,19 @@ Pattern: Go struct methods → Wails generates TypeScript bindings → React cal
 
 ### Known gaps (be honest about these if asked)
 - No Windows/macOS Wi-Fi support (Linux-only for nmcli/iwconfig)
-- Upload speed test depends on Cloudflare not rate-limiting (sometimes reports 0)
-- No test coverage for storage layer or frontend components (only diagnosis engine tested)
-- Alert rules don't persist to disk (lost on restart)
+- Upload speed test depends on Cloudflare not rate-limiting (falls back to httpbin, reports -1 if both fail)
+- No test coverage for storage layer or frontend components (only diagnosis engine tested — 32 tests)
 - Single-node only — no multi-device monitoring
 - `HideWindowOnClose` (tray mode) only works in production build, not dev mode
+
+### Security & reliability hardening (implemented)
+- SQLite file chmod 0600 on creation (owner-only access)
+- Startup ping permissions check with actionable fix instructions
+- LAN scanner rate-limited to 60s between scans
+- Speed test capped at 4 connections × 8s (reduced from 6 × 10s)
+- Batched writer retries once on queue full before dropping
+- Alert thresholds persist to config.json on save
+- DB integrity check on every open
 
 ---
 

@@ -29,6 +29,8 @@ NetPulse continuously monitors your internet/Wi-Fi health, runs a layered diagno
 - **Wi-Fi signal tracking** — RSSI, channel, band, link speed via nmcli/iwconfig
 - **Speed tests** — periodic + on-demand download/upload via Cloudflare CDN
 - **Network change detection** — detects Wi-Fi → hotspot switches, logs events
+- **LAN device scanner** — discovers devices on your network via ARP + ping sweep with vendor identification
+- **Network change detection** — detects Wi-Fi → hotspot switches, logs events
 
 ### Diagnosis Engine
 5-layer decision tree that isolates root cause:
@@ -172,6 +174,18 @@ go run ./cmd/dbcheck/
 | Desktop UI | Wails v2 (WebKit2GTK) |
 | Frontend | React + TypeScript + Recharts |
 | Notifications | notify-send (Linux) |
+
+---
+
+## Security & Reliability
+
+- **Database permissions**: SQLite file created with `0600` (owner read/write only)
+- **Ping permissions check**: Warns on startup if unprivileged ICMP is disabled
+- **LAN scanner rate-limited**: Maximum one scan per 60 seconds to prevent network noise
+- **Speed test capped**: 4 connections × 8s duration to avoid saturating shared networks
+- **Write reliability**: Batched writer with retry on queue full; integrity check on DB open
+- **Alert persistence**: Threshold changes saved to `~/.config/netpulse/config.json`
+- **Auto-maintenance**: Old data purged after 7 days; baselines recomputed hourly
 
 ---
 

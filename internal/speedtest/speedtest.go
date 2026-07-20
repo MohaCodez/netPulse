@@ -42,8 +42,8 @@ func DefaultConfig() *TestConfig {
 			"https://speed.cloudflare.com/__up",
 			"https://httpbin.org/post",
 		},
-		Duration:    10 * time.Second,
-		Connections: 6,
+		Duration:    8 * time.Second, // 8s instead of 10s to reduce network saturation time
+		Connections: 4,              // 4 instead of 6 to leave bandwidth for other devices
 	}
 }
 
@@ -175,7 +175,8 @@ func (r *Runner) runTest(ctx context.Context) (*Result, error) {
 	// Upload test (shorter duration to stay within total time budget)
 	uploadMbps, err := r.measureUpload(ctx)
 	if err != nil {
-		log.Printf("[speedtest] upload failed (non-fatal): %v", err)
+		log.Printf("[speedtest] upload: %v", err)
+		result.UploadMbps = -1 // -1 signals "unavailable" to frontend
 	} else {
 		result.UploadMbps = uploadMbps
 	}

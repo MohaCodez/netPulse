@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { StatusCard } from './components/StatusCard';
 import { LatencyChart } from './components/LatencyChart';
 import { SpeedTest } from './components/SpeedTest';
@@ -6,23 +6,24 @@ import { DiagnosisHistory } from './components/DiagnosisHistory';
 import { UptimeCard } from './components/UptimeCard';
 import { WifiCard } from './components/WifiCard';
 import { ExportButton } from './components/ExportButton';
-import { WifiSignalChart } from './components/WifiSignalChart';
-import { PacketLossChart } from './components/PacketLossChart';
 import { GatewayVsExternalChart } from './components/GatewayVsExternalChart';
-import { DNSComparisonChart } from './components/DNSComparisonChart';
-import { JitterChart } from './components/JitterChart';
-import { BandHopChart } from './components/BandHopChart';
-import { Heatmap } from './components/Heatmap';
 import { DiagnosisTimelineChart } from './components/DiagnosisTimelineChart';
-import { SpeedHistoryChart } from './components/SpeedHistoryChart';
-import { CorrelationChart } from './components/CorrelationChart';
 import { AlertConfig } from './components/AlertConfig';
-import { Theory } from './components/Theory';
-import './components/Theory.css';
 import { AIChat } from './components/AIChat';
-import { ProjectReport } from './components/ProjectReport';
-import './components/ProjectReport.css';
 import { NetworkDevices } from './components/NetworkDevices';
+import './components/NetworkDevices.css';
+
+// Lazy-loaded heavy components (only loaded when tab is active)
+const WifiSignalChart = lazy(() => import('./components/WifiSignalChart').then(m => ({ default: m.WifiSignalChart })));
+const PacketLossChart = lazy(() => import('./components/PacketLossChart').then(m => ({ default: m.PacketLossChart })));
+const DNSComparisonChart = lazy(() => import('./components/DNSComparisonChart').then(m => ({ default: m.DNSComparisonChart })));
+const JitterChart = lazy(() => import('./components/JitterChart').then(m => ({ default: m.JitterChart })));
+const BandHopChart = lazy(() => import('./components/BandHopChart').then(m => ({ default: m.BandHopChart })));
+const Heatmap = lazy(() => import('./components/Heatmap').then(m => ({ default: m.Heatmap })));
+const SpeedHistoryChart = lazy(() => import('./components/SpeedHistoryChart').then(m => ({ default: m.SpeedHistoryChart })));
+const CorrelationChart = lazy(() => import('./components/CorrelationChart').then(m => ({ default: m.CorrelationChart })));
+const Theory = lazy(() => import('./components/Theory').then(m => ({ default: m.Theory })));
+const ProjectReport = lazy(() => import('./components/ProjectReport').then(m => ({ default: m.ProjectReport })));
 import './components/NetworkDevices.css';
 import {
   useNetworkStatus,
@@ -125,20 +126,22 @@ function App() {
         )}
 
         {tab === 'analytics' && (
-          <div className="analytics-page">
-            <div className="analytics-grid">
-              <CorrelationChart wifiData={wifiSignal} latencyData={gatewayVsExt} />
-              <WifiSignalChart data={wifiSignal} />
-              <BandHopChart data={wifiSignal} />
-              <SpeedHistoryChart tests={tests} />
-              <GatewayVsExternalChart data={gatewayVsExt} />
-              <PacketLossChart data={packetLoss} />
-              <DNSComparisonChart data={dnsData} />
-              <JitterChart data={jitterData} />
-              <Heatmap data={heatmapData} />
-              <DiagnosisTimelineChart data={diagTimeline} />
+          <Suspense fallback={<div className="loading-tab">Loading analytics...</div>}>
+            <div className="analytics-page">
+              <div className="analytics-grid">
+                <CorrelationChart wifiData={wifiSignal} latencyData={gatewayVsExt} />
+                <WifiSignalChart data={wifiSignal} />
+                <BandHopChart data={wifiSignal} />
+                <SpeedHistoryChart tests={tests} />
+                <GatewayVsExternalChart data={gatewayVsExt} />
+                <PacketLossChart data={packetLoss} />
+                <DNSComparisonChart data={dnsData} />
+                <JitterChart data={jitterData} />
+                <Heatmap data={heatmapData} />
+                <DiagnosisTimelineChart data={diagTimeline} />
+              </div>
             </div>
-          </div>
+          </Suspense>
         )}
 
         {tab === 'settings' && (
@@ -148,9 +151,17 @@ function App() {
           </div>
         )}
 
-        {tab === 'theory' && <Theory />}
+        {tab === 'theory' && (
+          <Suspense fallback={<div className="loading-tab">Loading...</div>}>
+            <Theory />
+          </Suspense>
+        )}
 
-        {tab === 'report' && <ProjectReport />}
+        {tab === 'report' && (
+          <Suspense fallback={<div className="loading-tab">Loading report...</div>}>
+            <ProjectReport />
+          </Suspense>
+        )}
 
         {/* AI chat is always mounted but hidden when not active — preserves conversation */}
         <div className="ai-page" style={{ display: tab === 'ai' ? 'block' : 'none' }}>

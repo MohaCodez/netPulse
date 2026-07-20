@@ -194,3 +194,10 @@ body {
   margin: 0 auto;
   height: calc(100vh - 120px);
 }
+
+.loading-tab {
+  text-align: center;
+  padding: 48px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}

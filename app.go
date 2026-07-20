@@ -96,6 +96,11 @@ func (a *App) startup(ctx context.Context) {
 	// Set up batched writer
 	a.writer = storage.NewWriter(a.db, 256)
 
+	// Check ping permissions
+	if err := probe.CheckPingPermissions(); err != nil {
+		log.Printf("[warn] %v", err)
+	}
+
 	// Set up notifications
 	a.notify = notifier.NewNotifier(a.cfg.NotificationsEnabled, 60*time.Second)
 

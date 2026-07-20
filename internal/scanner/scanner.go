@@ -26,8 +26,9 @@ type Device struct {
 
 // Scanner discovers devices on the local network.
 type Scanner struct {
-	mu      sync.RWMutex
-	devices map[string]*Device // keyed by MAC
+	mu       sync.RWMutex
+	devices  map[string]*Device // keyed by MAC
+	lastScan time.Time
 }
 
 // NewScanner creates a network scanner.
@@ -38,7 +39,19 @@ func NewScanner() *Scanner {
 }
 
 // Scan performs a network scan and returns all discovered devices.
+// Rate-limited to once per 60 seconds.
 func (s *Scanner) Scan(ctx context.Context) ([]*Device, error) {
+	s.mu.RLock()
+	if time.Since(s.lastScan) < 60*time.Second {
+		// Return cached results
+		var result []*Device
+		for _, dev := range s.devices {
+			result = append(result, dev)
+		}
+		s.mu.RUnlock()
+		return result, nil
+	}
+	s.mu.RUnlock()
 	// Get local interface info
 	localIP, subnet, iface, err := getLocalNetwork()
 	if err != nil {
@@ -114,6 +127,7 @@ func (s *Scanner) Scan(ctx context.Context) ([]*Device, error) {
 	for _, dev := range s.devices {
 		result = append(result, dev)
 	}
+	s.lastScan = time.Now()
 	s.mu.Unlock()
 
 	return result, nil

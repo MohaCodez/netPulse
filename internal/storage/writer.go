@@ -33,17 +33,17 @@ func (w *Writer) Stop() {
 	w.wg.Wait()
 }
 
-// Enqueue adds a write operation to the queue.
+// Enqueue adds a write operation to the queue. Retries once if queue is full.
 func (w *Writer) Enqueue(fn func()) {
 	select {
 	case w.queue <- fn:
 	default:
-		// Queue full — drop oldest to prevent blocking probes
+		// Queue full — wait briefly then retry once
+		time.Sleep(5 * time.Millisecond)
 		select {
-		case <-w.queue:
-			w.queue <- fn
+		case w.queue <- fn:
 		default:
-			w.queue <- fn
+			log.Printf("[writer] write dropped: queue full (%d items)", len(w.queue))
 		}
 	}
 }

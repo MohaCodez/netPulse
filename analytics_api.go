@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/amit/netpulse/internal/config"
 	"github.com/amit/netpulse/internal/scanner"
 	"github.com/amit/netpulse/internal/storage"
 )
@@ -162,7 +163,7 @@ func (a *App) GetAlertRules() *AlertRules {
 	}
 }
 
-// SetAlertRules updates the alert thresholds.
+// SetAlertRules updates the alert thresholds and persists to config.
 func (a *App) SetAlertRules(rules AlertRules) {
 	t := a.diagEngine.GetThresholds()
 	t.LatencyWarningMs = rules.LatencyWarningMs
@@ -175,6 +176,10 @@ func (a *App) SetAlertRules(rules AlertRules) {
 	a.diagEngine.SetThresholds(t)
 
 	a.cfg.NotificationsEnabled = rules.NotificationsEnabled
+
+	// Persist to disk
+	cfgPath := config.ConfigDir() + "/config.json"
+	a.cfg.Save(cfgPath)
 }
 
 // ProjectReportData holds aggregated data for the project report section.
