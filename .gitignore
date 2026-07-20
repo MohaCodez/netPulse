@@ -27,6 +27,3 @@ Thumbs.db
 
 # Wails generated (runtime only — bindings are committed)
 frontend/wailsjs/runtime/package.json
-
-# Personal notes (not for repo)
-STUDY_NOTES.md
