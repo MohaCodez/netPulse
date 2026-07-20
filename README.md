@@ -9,6 +9,9 @@ NetPulse continuously monitors your internet/Wi-Fi health, runs a layered diagno
 ---
 <img width="1378" height="1001" alt="image" src="https://github.com/user-attachments/assets/a362a5c9-6e56-4204-b5ef-dace5dd1ba14" />
 
+<img width="1378" height="1001" alt="image" src="https://github.com/user-attachments/assets/e8657a74-c334-4aa9-98f0-a41a9971028b" />
+
+
 ## Features
 
 ### Core Monitoring
