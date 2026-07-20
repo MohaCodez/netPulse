@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import Markdown from 'react-markdown';
 import './AIChat.css';
 
 interface Message {
@@ -101,7 +102,7 @@ export function AIChat() {
         {messages.map((msg, i) => (
           <div key={i} className={`chat-message ${msg.role}`}>
             <div className="message-bubble">
-              <pre className="message-content">{msg.content}</pre>
+              <div className="message-content"><Markdown>{msg.content}</Markdown></div>
             </div>
             <span className="message-time">
               {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
