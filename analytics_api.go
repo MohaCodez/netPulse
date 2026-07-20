@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/amit/netpulse/internal/storage"
@@ -176,6 +177,14 @@ func (a *App) SetAlertRules(rules AlertRules) {
 
 // AskAI sends a question to the local Ollama instance with network context.
 func (a *App) AskAI(question string) (string, error) {
+	// Quick check if Ollama is reachable
+	client := &http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Get("http://localhost:11434/api/tags")
+	if err != nil {
+		return "", fmt.Errorf("Ollama is not running. Start it with: ollama serve")
+	}
+	resp.Body.Close()
+
 	// Gather current context for the AI
 	context := a.buildAIContext()
 

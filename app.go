@@ -124,6 +124,10 @@ func (a *App) startup(ctx context.Context) {
 	a.networkWatcher = probe.NewNetworkWatcher(3*time.Second, a.handleNetworkChange)
 	a.networkWatcher.Start()
 
+	// Set up periodic maintenance (purge old data, recompute baselines)
+	maintenance := storage.NewMaintenance(a.db, 1*time.Hour)
+	maintenance.Start()
+
 	log.Println("All systems started")
 }
 
@@ -149,6 +153,14 @@ func (a *App) shutdown(ctx context.Context) {
 }
 
 func (a *App) handleProbeResult(r probe.Result) {
+	// Get current network name
+	var networkID string
+	if a.networkWatcher != nil {
+		if info := a.networkWatcher.Current(); info != nil {
+			networkID = info.SSID
+		}
+	}
+
 	pr := &storage.ProbeResult{
 		Timestamp:  r.Timestamp,
 		ProbeType:  r.Type,
@@ -157,6 +169,7 @@ func (a *App) handleProbeResult(r probe.Result) {
 		LatencyMs:  r.LatencyMs,
 		JitterMs:   r.JitterMs,
 		PacketLoss: r.PacketLoss,
+		NetworkID:  networkID,
 		Extra:      r.Extra,
 	}
 	if err := a.db.InsertProbeResult(pr); err != nil {
@@ -199,6 +212,7 @@ func (a *App) handleDiagnosis(v *diagnosis.Verdict) {
 }
 
 func (a *App) handleSpeedTest(result *speedtest.Result) {
+	a.diagMonitor.SetSpeedTesting(false) // Clear flag after test completes
 	st := &storage.SpeedTestResult{
 		Timestamp:    result.Timestamp,
 		DownloadMbps: result.DownloadMbps,

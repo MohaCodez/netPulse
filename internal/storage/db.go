@@ -30,6 +30,7 @@ type ProbeResult struct {
 	LatencyMs  float64   `json:"latency_ms"`
 	JitterMs   float64   `json:"jitter_ms"`
 	PacketLoss float64   `json:"packet_loss"`
+	NetworkID  string    `json:"network_id,omitempty"` // SSID or connection name
 	Extra      map[string]interface{} `json:"extra,omitempty"`
 }
 
@@ -96,6 +97,13 @@ func Open(dbPath string) (*DB, error) {
 	if _, err := conn.Exec(schemaSQL); err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("apply schema: %w", err)
+	}
+
+	// Integrity check
+	var integrity string
+	if err := conn.QueryRow("PRAGMA integrity_check").Scan(&integrity); err == nil && integrity != "ok" {
+		conn.Close()
+		return nil, fmt.Errorf("database integrity check failed: %s", integrity)
 	}
 
 	return &DB{conn: conn}, nil

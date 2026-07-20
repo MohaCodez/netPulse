@@ -12,8 +12,13 @@ export function StatusCard({ status, loading }: Props) {
       <div className="status-card status-unknown">
         <div className="status-indicator" />
         <div className="status-content">
-          <h2>Initializing...</h2>
-          <p>Collecting network data</p>
+          <h2>Starting up...</h2>
+          <p>Probing your network — first diagnosis in ~30 seconds</p>
+          <div className="startup-progress">
+            <span className="progress-dot active" />
+            <span className="progress-dot" />
+            <span className="progress-dot" />
+          </div>
         </div>
       </div>
     );

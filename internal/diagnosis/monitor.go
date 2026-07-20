@@ -27,6 +27,7 @@ type Monitor struct {
 	activeDiagID *int64 // ID of the currently active diagnosis in the DB
 	running      bool
 	cancel       context.CancelFunc
+	speedTesting bool // true while a speed test is running
 }
 
 // NewMonitor creates a diagnosis monitor.
@@ -76,6 +77,13 @@ func (m *Monitor) LastVerdict() *Verdict {
 	return m.lastVerdict
 }
 
+// SetSpeedTesting signals whether a speed test is currently running.
+func (m *Monitor) SetSpeedTesting(testing bool) {
+	m.mu.Lock()
+	m.speedTesting = testing
+	m.mu.Unlock()
+}
+
 func (m *Monitor) loop(ctx context.Context) {
 	// Wait a bit for initial data to accumulate
 	select {
@@ -101,6 +109,14 @@ func (m *Monitor) loop(ctx context.Context) {
 }
 
 func (m *Monitor) evaluate() {
+	// Skip diagnosis during speed tests (they spike latency)
+	m.mu.RLock()
+	if m.speedTesting {
+		m.mu.RUnlock()
+		return
+	}
+	m.mu.RUnlock()
+
 	// Get recent probe results
 	since := time.Now().Add(-m.window)
 	results, err := m.db.GetProbeResultsSince(since)
@@ -109,8 +125,29 @@ func (m *Monitor) evaluate() {
 		return
 	}
 
-	// Build snapshot (no Wi-Fi data yet — will integrate when wifi package is ready)
-	snap := m.aggregator.BuildSnapshot(results, nil, int(m.window.Seconds()))
+	// Get latest Wi-Fi snapshot
+	wifiSnap, _ := m.db.GetLatestWifiSnapshot()
+
+	// Get baseline for latency comparison
+	var latencyMultiplier float64 = 1.0
+	if baseline, err := m.db.GetBaseline("ping", "8.8.8.8"); err == nil && baseline != nil && baseline.P50Latency > 0 {
+		// Compute current avg latency for comparison
+		var totalLat float64
+		var count int
+		for _, r := range results {
+			if r.ProbeType == "ping" && r.Success && r.LatencyMs > 0 {
+				totalLat += r.LatencyMs
+				count++
+			}
+		}
+		if count > 0 {
+			latencyMultiplier = (totalLat / float64(count)) / baseline.P50Latency
+		}
+	}
+
+	// Build snapshot with Wi-Fi and baseline data
+	snap := m.aggregator.BuildSnapshot(results, wifiSnap, int(m.window.Seconds()))
+	snap.LatencyVsBaseline = latencyMultiplier
 
 	// Run diagnosis engine
 	verdict := m.engine.Evaluate(snap)

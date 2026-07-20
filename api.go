@@ -185,7 +185,11 @@ func (a *App) RunSpeedTest() (*SpeedTestResponse, error) {
 		return nil, nil
 	}
 
+	// Pause diagnosis during speed test
+	a.diagMonitor.SetSpeedTesting(true)
 	result, err := a.speedRunner.RunNow(context.Background())
+	a.diagMonitor.SetSpeedTesting(false)
+
 	if err != nil {
 		return nil, err
 	}
