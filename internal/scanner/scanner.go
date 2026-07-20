@@ -131,7 +131,7 @@ func (s *Scanner) GetDevices() []*Device {
 	return result
 }
 
-// pingSweep sends ICMP pings to all IPs in the subnet to populate ARP cache.
+// pingSweep sends pings to all IPs in the subnet to populate ARP cache.
 func (s *Scanner) pingSweep(ctx context.Context, subnet string) {
 	// Parse CIDR
 	ip, ipNet, err := net.ParseCIDR(subnet)
@@ -150,7 +150,16 @@ func (s *Scanner) pingSweep(ctx context.Context, subnet string) {
 		ips = ips[1 : len(ips)-1]
 	}
 
-	// Ping all in parallel (just to populate ARP, don't care about responses)
+	// First: broadcast ping (fast, catches devices that respond to broadcast)
+	_, ipNetBcast, _ := net.ParseCIDR(subnet)
+	if ipNetBcast != nil {
+		bcast := getBroadcast(ipNetBcast)
+		if bcast != "" {
+			exec.CommandContext(ctx, "ping", "-b", "-c", "2", "-W", "1", bcast).Run()
+		}
+	}
+
+	// Then: parallel ICMP pings using system ping (reliable ARP population)
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 50) // limit concurrent pings
 
@@ -167,13 +176,24 @@ func (s *Scanner) pingSweep(ctx context.Context, subnet string) {
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			conn, err := net.DialTimeout("udp", ip+":1", 200*time.Millisecond)
-			if err == nil {
-				conn.Close()
-			}
+			// Use system ping — most reliable way to populate ARP
+			exec.CommandContext(ctx, "ping", "-c", "1", "-W", "1", ip).Run()
 		}(target)
 	}
 	wg.Wait()
+}
+
+func getBroadcast(ipNet *net.IPNet) string {
+	ip := ipNet.IP.To4()
+	if ip == nil {
+		return ""
+	}
+	mask := ipNet.Mask
+	broadcast := make(net.IP, 4)
+	for i := range ip {
+		broadcast[i] = ip[i] | ^mask[i]
+	}
+	return broadcast.String()
 }
 
 type arpEntry struct {

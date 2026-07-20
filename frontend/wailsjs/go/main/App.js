@@ -74,6 +74,10 @@ export function GetJitterHistory(arg1) {
   return window['go']['main']['App']['GetJitterHistory'](arg1);
 }
 
+export function GetNetworkDevices() {
+  return window['go']['main']['App']['GetNetworkDevices']();
+}
+
 export function GetNetworkEvents(arg1) {
   return window['go']['main']['App']['GetNetworkEvents'](arg1);
 }
@@ -108,6 +112,10 @@ export function GetWifiSignalHistory(arg1) {
 
 export function RunSpeedTest() {
   return window['go']['main']['App']['RunSpeedTest']();
+}
+
+export function ScanNetwork() {
+  return window['go']['main']['App']['ScanNetwork']();
 }
 
 export function SetAlertRules(arg1) {
