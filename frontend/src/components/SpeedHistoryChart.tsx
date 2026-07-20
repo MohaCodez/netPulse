@@ -40,7 +40,7 @@ export function SpeedHistoryChart({ tests }: Props) {
             contentStyle={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 8 }}
             labelFormatter={(val) => new Date(val as number).toLocaleString()}
             formatter={(val: any, name: any) => [
-              name === 'latency' ? `${Number(val).toFixed(0)}ms` : `${Number(val).toFixed(1)} Mbps`
+              name === 'Latency' ? `${Number(val).toFixed(0)} ms` : `${Number(val).toFixed(1)} Mbps`
             ]}
           />
           <Legend />
