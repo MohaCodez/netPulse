@@ -7,9 +7,17 @@ NetPulse continuously monitors your internet/Wi-Fi health, runs a layered diagno
 ![Overview](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go) ![React](https://img.shields.io/badge/React-18+-61DAFB?logo=react) ![Wails](https://img.shields.io/badge/Wails-2.13-red)
 
 ---
-<img width="1378" height="1001" alt="image" src="https://github.com/user-attachments/assets/a362a5c9-6e56-4204-b5ef-dace5dd1ba14" />
+<img width="1369" height="994" alt="image" src="https://github.com/user-attachments/assets/bdcd6b45-7248-44d3-b5ff-baccdc50b1a1" />
+
+<img width="1369" height="994" alt="image" src="https://github.com/user-attachments/assets/45d0d0c6-7dc2-4fb0-90fb-2c283b312306" />
+
+<img width="1378" height="1001" alt="image" src="https://github.com/user-attachments/assets/6232a86c-f02e-4d13-a454-6a18f7f404bc" />
 
 <img width="1378" height="1001" alt="image" src="https://github.com/user-attachments/assets/e8657a74-c334-4aa9-98f0-a41a9971028b" />
+
+<img width="1369" height="994" alt="image" src="https://github.com/user-attachments/assets/da494a7a-395b-4e92-8a10-fa1c9774fe96" />
+
+<img width="1369" height="994" alt="image" src="https://github.com/user-attachments/assets/e9cf69ed-b8ae-49a7-9c88-637b93104bc9" />
 
 
 ## Features
