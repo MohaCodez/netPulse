@@ -286,10 +286,15 @@ Use bullet points for clarity when appropriate.`
 func (a *App) buildAIContext() string {
 	ctx := "Current Network State:\n"
 
-	// Current status
+	// Current diagnosis
 	v := a.diagMonitor.LastVerdict()
 	if v != nil {
 		ctx += fmt.Sprintf("- Diagnosis: %s (%s) — %s\n", v.Title, v.Category, v.Severity)
+		if len(v.Evidence) > 0 {
+			for _, e := range v.Evidence {
+				ctx += fmt.Sprintf("  Evidence: %s = %s\n", e.Description, e.Value)
+			}
+		}
 	}
 
 	// Wi-Fi
@@ -298,23 +303,37 @@ func (a *App) buildAIContext() string {
 		if wSnap.FrequencyMHz >= 5000 {
 			band = "5 GHz"
 		}
-		ctx += fmt.Sprintf("- Wi-Fi: %s, %s Ch%d, Signal %d dBm, Link %0.f Mbps\n",
+		ctx += fmt.Sprintf("- Wi-Fi: SSID=%s, %s Ch%d, Signal %d dBm, Link %.0f Mbps\n",
 			wSnap.SSID, band, wSnap.Channel, wSnap.SignalDBm, wSnap.LinkSpeedMbps)
 	}
 
-	// Recent latency
+	// Uptime stats
+	if uptimeStats, err := a.db.GetUptimeStats(); err == nil {
+		ctx += fmt.Sprintf("- Uptime: 1h=%.1f%%, 24h=%.1f%%, 7d=%.1f%%\n",
+			uptimeStats["1h"], uptimeStats["24h"], uptimeStats["7d"])
+	}
+
+	// Recent latency (last 1 min)
 	since := time.Now().Add(-1 * time.Minute)
 	if results, err := a.db.GetProbeResultsSince(since); err == nil && len(results) > 0 {
-		var gatewayLat, extLat float64
-		var gCount, eCount int
+		var gatewayLat, extLat, dnsLat, jitter float64
+		var gCount, eCount, dCount, jCount int
 		for _, r := range results {
 			if r.Success {
-				if r.ProbeType == "gateway" {
+				switch r.ProbeType {
+				case "gateway":
 					gatewayLat += r.LatencyMs
 					gCount++
-				} else if r.ProbeType == "ping" {
+				case "ping":
 					extLat += r.LatencyMs
 					eCount++
+					if r.JitterMs > 0 {
+						jitter += r.JitterMs
+						jCount++
+					}
+				case "dns":
+					dnsLat += r.LatencyMs
+					dCount++
 				}
 			}
 		}
@@ -324,11 +343,41 @@ func (a *App) buildAIContext() string {
 		if eCount > 0 {
 			ctx += fmt.Sprintf("- External latency (last 1min): %.0fms avg\n", extLat/float64(eCount))
 		}
+		if dCount > 0 {
+			ctx += fmt.Sprintf("- DNS latency (last 1min): %.0fms avg\n", dnsLat/float64(dCount))
+		}
+		if jCount > 0 {
+			ctx += fmt.Sprintf("- Jitter (last 1min): %.0fms avg\n", jitter/float64(jCount))
+		}
 	}
 
 	// Speed test
 	if tests, err := a.db.GetRecentSpeedTests(1); err == nil && len(tests) > 0 {
-		ctx += fmt.Sprintf("- Last speed test: ↓%.1f Mbps ↑%.1f Mbps\n", tests[0].DownloadMbps, tests[0].UploadMbps)
+		ctx += fmt.Sprintf("- Last speed test: ↓%.1f Mbps ↑%.1f Mbps (latency: %.0fms)\n",
+			tests[0].DownloadMbps, tests[0].UploadMbps, tests[0].LatencyMs)
+	}
+
+	// Recent diagnoses (last 24h)
+	if diagnoses, err := a.db.GetDiagnosisHistory(5); err == nil && len(diagnoses) > 0 {
+		ctx += fmt.Sprintf("- Recent issues (last 5 diagnoses):\n")
+		for _, d := range diagnoses {
+			resolved := "active"
+			if d.Resolved {
+				resolved = "resolved"
+			}
+			ctx += fmt.Sprintf("  [%s] %s — %s (%s)\n", d.Severity, d.Title, d.Category, resolved)
+		}
+	}
+
+	// Band hops
+	var bandHops int
+	a.db.QueryRow(`
+		SELECT COUNT(*) FROM (
+			SELECT channel, LAG(channel) OVER (ORDER BY timestamp) as prev_channel
+			FROM wifi_snapshots WHERE channel > 0 AND timestamp > datetime('now', '-1 hours')
+		) WHERE channel != prev_channel AND prev_channel IS NOT NULL`).Scan(&bandHops)
+	if bandHops > 0 {
+		ctx += fmt.Sprintf("- Band hops in last hour: %d\n", bandHops)
 	}
 
 	// Network events
@@ -336,6 +385,14 @@ func (a *App) buildAIContext() string {
 	if events, err := a.db.GetNetworkEvents(evSince); err == nil && len(events) > 0 {
 		ctx += fmt.Sprintf("- Network changes in last hour: %d\n", len(events))
 		ctx += fmt.Sprintf("  Last change: %s → %s (%s)\n", events[0].PrevSSID, events[0].CurrSSID, events[0].Reason)
+	}
+
+	// Current network
+	if a.networkWatcher != nil {
+		if info := a.networkWatcher.Current(); info != nil {
+			ctx += fmt.Sprintf("- Current connection: %s (%s) via %s, gateway %s\n",
+				info.SSID, info.Type, info.Interface, info.Gateway)
+		}
 	}
 
 	return ctx
