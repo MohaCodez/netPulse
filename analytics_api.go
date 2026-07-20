@@ -175,6 +175,87 @@ func (a *App) SetAlertRules(rules AlertRules) {
 	a.cfg.NotificationsEnabled = rules.NotificationsEnabled
 }
 
+// ProjectReportData holds aggregated data for the project report section.
+type ProjectReportData struct {
+	TotalProbes        int     `json:"totalProbes"`
+	TotalDiagnoses     int     `json:"totalDiagnoses"`
+	TotalSpeedTests    int     `json:"totalSpeedTests"`
+	TotalWifiSnapshots int     `json:"totalWifiSnapshots"`
+	TotalNetworkEvents int     `json:"totalNetworkEvents"`
+	UptimeHour         float64 `json:"uptimeHour"`
+	Uptime24h          float64 `json:"uptime24h"`
+	Uptime7d           float64 `json:"uptime7d"`
+	AvgLatency         float64 `json:"avgLatency"`
+	AvgGatewayLatency  float64 `json:"avgGatewayLatency"`
+	AvgDnsLatency      float64 `json:"avgDnsLatency"`
+	AvgDownload        float64 `json:"avgDownload"`
+	AvgUpload          float64 `json:"avgUpload"`
+	AvgSignal          int     `json:"avgSignal"`
+	BandHops           int     `json:"bandHops"`
+	CurrentSSID        string  `json:"currentSSID"`
+	CurrentBand        string  `json:"currentBand"`
+	CurrentChannel     int     `json:"currentChannel"`
+	MonitoringSince    string  `json:"monitoringSince"`
+}
+
+// GetProjectReport returns aggregated data for the project report.
+func (a *App) GetProjectReport() *ProjectReportData {
+	r := &ProjectReportData{}
+
+	// Counts
+	a.db.QueryRow("SELECT COUNT(*) FROM probe_results").Scan(&r.TotalProbes)
+	a.db.QueryRow("SELECT COUNT(*) FROM diagnoses").Scan(&r.TotalDiagnoses)
+	a.db.QueryRow("SELECT COUNT(*) FROM speed_tests").Scan(&r.TotalSpeedTests)
+	a.db.QueryRow("SELECT COUNT(*) FROM wifi_snapshots").Scan(&r.TotalWifiSnapshots)
+	a.db.QueryRow("SELECT COUNT(*) FROM network_events").Scan(&r.TotalNetworkEvents)
+
+	// Uptime
+	uptimeStats, _ := a.db.GetUptimeStats()
+	r.UptimeHour = uptimeStats["1h"]
+	r.Uptime24h = uptimeStats["24h"]
+	r.Uptime7d = uptimeStats["7d"]
+
+	// Average latencies
+	a.db.QueryRow("SELECT COALESCE(AVG(latency_ms),0) FROM probe_results WHERE probe_type='ping' AND success=1").Scan(&r.AvgLatency)
+	a.db.QueryRow("SELECT COALESCE(AVG(latency_ms),0) FROM probe_results WHERE probe_type='gateway' AND success=1").Scan(&r.AvgGatewayLatency)
+	a.db.QueryRow("SELECT COALESCE(AVG(latency_ms),0) FROM probe_results WHERE probe_type='dns' AND success=1").Scan(&r.AvgDnsLatency)
+
+	// Speed tests
+	a.db.QueryRow("SELECT COALESCE(AVG(download_mbps),0), COALESCE(AVG(upload_mbps),0) FROM speed_tests").Scan(&r.AvgDownload, &r.AvgUpload)
+
+	// Wi-Fi signal
+	a.db.QueryRow("SELECT COALESCE(AVG(signal_dbm),0) FROM wifi_snapshots WHERE signal_dbm != 0").Scan(&r.AvgSignal)
+
+	// Band hops (count channel changes in wifi_snapshots)
+	a.db.QueryRow(`
+		SELECT COUNT(*) FROM (
+			SELECT channel, LAG(channel) OVER (ORDER BY timestamp) as prev_channel
+			FROM wifi_snapshots WHERE channel > 0
+		) WHERE channel != prev_channel AND prev_channel IS NOT NULL`).Scan(&r.BandHops)
+
+	// Current network
+	if a.networkWatcher != nil {
+		if info := a.networkWatcher.Current(); info != nil {
+			r.CurrentSSID = info.SSID
+		}
+	}
+	if snap, err := a.db.GetLatestWifiSnapshot(); err == nil && snap != nil {
+		r.CurrentChannel = snap.Channel
+		if snap.FrequencyMHz >= 5000 {
+			r.CurrentBand = "5 GHz"
+		} else {
+			r.CurrentBand = "2.4 GHz"
+		}
+	}
+
+	// Monitoring since
+	var earliest string
+	a.db.QueryRow("SELECT MIN(timestamp) FROM probe_results").Scan(&earliest)
+	r.MonitoringSince = earliest
+
+	return r
+}
+
 // AskAI sends a question to the local Ollama instance with network context.
 func (a *App) AskAI(question string) (string, error) {
 	// Quick check if Ollama is reachable

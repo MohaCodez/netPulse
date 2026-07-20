@@ -376,3 +376,8 @@ func (db *DB) ClearAllData() error {
 	_, err := db.conn.Exec("VACUUM")
 	return err
 }
+
+// QueryRow exposes the underlying sql.DB QueryRow for ad-hoc queries.
+func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
+	return db.conn.QueryRow(query, args...)
+}

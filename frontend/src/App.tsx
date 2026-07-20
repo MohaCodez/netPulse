@@ -20,6 +20,8 @@ import { AlertConfig } from './components/AlertConfig';
 import { Theory } from './components/Theory';
 import './components/Theory.css';
 import { AIChat } from './components/AIChat';
+import { ProjectReport } from './components/ProjectReport';
+import './components/ProjectReport.css';
 import {
   useNetworkStatus,
   useProbeResults,
@@ -39,7 +41,7 @@ import {
 } from './hooks/useAnalytics';
 import './App.css';
 
-type Tab = 'overview' | 'analytics' | 'theory' | 'ai' | 'settings';
+type Tab = 'overview' | 'analytics' | 'theory' | 'report' | 'ai' | 'settings';
 
 function App() {
   const [tab, setTab] = useState<Tab>('overview');
@@ -76,6 +78,9 @@ function App() {
             </button>
             <button className={`tab-btn ${tab === 'theory' ? 'active' : ''}`} onClick={() => setTab('theory')}>
               Theory
+            </button>
+            <button className={`tab-btn ${tab === 'report' ? 'active' : ''}`} onClick={() => setTab('report')}>
+              Report
             </button>
             <button className={`tab-btn ${tab === 'ai' ? 'active' : ''}`} onClick={() => setTab('ai')}>
               AI
@@ -141,6 +146,8 @@ function App() {
         )}
 
         {tab === 'theory' && <Theory />}
+
+        {tab === 'report' && <ProjectReport />}
 
         {/* AI chat is always mounted but hidden when not active — preserves conversation */}
         <div className="ai-page" style={{ display: tab === 'ai' ? 'block' : 'none' }}>
